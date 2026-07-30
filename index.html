@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kim Tae Hwan | AI System Architect & Brand Hub</title>
+    <!-- Google Fonts: Inter & Noto Sans KR -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-primary: #111111;
+            --text-secondary: #666666;
+            --accent-color: #0052ff;
+            --accent-hover: #003ebd;
+            --border-color: #eaeaea;
+            --card-bg: #fafafa;
+            --font-main: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            --max-width: 1000px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        section {
+            padding: 60px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        section:last-of-type {
+            border-bottom: none;
+        }
+
+        h1, h2, h3 {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 56px;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .admin-nav-btn {
+            color: var(--accent-color) !important;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #f0f4ff;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .admin-nav-btn:hover {
+            background: #e0eaff;
+        }
+
+        .hero {
+            padding-top: 120px;
+            padding-bottom: 60px;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            background: #f0f4ff;
+            color: var(--accent-color);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.825rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 4.5vw, 3.2rem);
+            line-height: 1.25;
+            margin-bottom: 16px;
+            word-break: keep-all;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            max-width: 680px;
+            word-break: keep-all;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--text-primary);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: #333333;
+        }
+
+        .btn-secondary {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f0f0f0;
+        }
+
+        .about-text {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 28px;
+            word-break: keep-all;
+        }
+
+        .about-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .about-feature-item {
+            border-left: 2px solid var(--accent-color);
+            padding-left: 14px;
+        }
+
+        .about-feature-item h4 {
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+
+        .about-feature-item p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .service-card {
+            background: var(--card-bg);
+            padding: 24px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.2s ease;
+        }
+
+        .service-card:hover {
+            border-color: #ccc;
+        }
+
+        .service-card .icon {
+            font-size: 1.6rem;
+            margin-bottom: 12px;
+        }
+
+        .service-card h3 {
+            font-size: 1.05rem;
+            margin-bottom: 8px;
+        }
+
+        .service-card p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .project-card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #ffffff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        }
+
+        .project-category {
+            font-size: 0.75rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .project-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+
+        .project-card p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            word-break: keep-all;
+        }
+
+        .project-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 0.725rem;
+            background: var(--card-bg);
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+
+        .tech-group h3 {
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+        }
+
+        .tech-list {
+            list-style: none;
+        }
+
+        .tech-list li {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .contact {
+            text-align: center;
+            padding: 70px 0;
+        }
+
+        .contact h2 {
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+        }
+
+        .contact p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        .social-links a {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: color 0.2s ease;
+        }
+
+        .social-links a:hover {
+            color: var(--accent-color);
+        }
+
+        footer {
+            padding: 28px 0;
+            text-align: center;
+            font-size: 0.825rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            transform: translateY(12px) scale(0.97);
+            transition: transform 0.25s ease;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #334155;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.825rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .error-text {
+            color: #ef4444;
+            font-size: 0.8rem;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .error-text.active {
+            display: block;
+        }
+
+        .success-text {
+            color: #10b981;
+            font-size: 0.85rem;
+            margin-top: 6px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .success-text.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            section {
+                padding: 48px 0;
+            }
+            .hero {
+                padding-top: 100px;
+                padding-bottom: 48px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="container nav-container">
+            <a href="#" class="logo">KIM TAEHWAN</a>
+            <ul class="nav-links">
+                <li><a href="#about">About</a></li>
+                <li><a href="#what-i-do">What I Do</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#tech">Tech Stack</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li>
+                    <button onclick="openAdminModal()" class="admin-nav-btn">
+                        <i class="ph ph-lock-key"></i> Admin
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <span class="hero-tag">AI Operating System Architect</span>
+            <h1>AI를 사용하는 것을 넘어,<br>스스로 일하도록 시스템을 설계합니다.</h1>
+            <p>Prompt Engineering · AI Workflow Automation · AEGIS PRIME</p>
+            <div class="btn-group">
+                <a href="timer.html" class="btn btn-primary">나의 첫 작품 보기</a>
+                <a href="#contact" class="btn btn-secondary">문의하기</a>
+            </div>
+        </div>
+    </header>
+
+    <section id="about">
+        <div class="container">
+            <div class="section-title">About</div>
+            <p class="about-text">
+                안녕하세요, Kim Tae Hwan입니다.<br>
+                저는 AI를 활용하여 복잡한 업무를 체계적으로 자동화하는 방식을 연구합니다.<br>
+                단순히 단발성 프롬프트를 작성하는 것에 그치지 않고, AI가 일관된 품질로 반복 작업을 수행할 수 있는 <strong>운영 시스템 및 실행 파이프라인</strong>을 설계합니다.
+            </p>
+            <div class="about-features">
+                <div class="about-feature-item">
+                    <h4>Prompt Engineering</h4>
+                    <p>고도화된 맥락 설계 및 프롬프트 구조화</p>
+                </div>
+                <div class="about-feature-item">
+                    <h4>Workflow Design</h4>
+                    <p>복잡한 비즈니스 프로세스 자동화</p>
+                </div>
+                <div class="about-feature-item">
+                    <h4>AI System Architecture</h4>
+                    <p>모듈화된 AI 운영 체계 개발</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="what-i-do">
+        <div class="container">
+            <div class="section-title">What I Do</div>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="icon">⚙️</div>
+                    <h3>AEGIS PRIME</h3>
+                    <p>재사용 가능한 Work Block 기반의 AI 작업 운영 시스템 구축</p>
+                </div>
+                <div class="service-card">
+                    <div class="icon">🎯</div>
+                    <h3>Prompt Engineering</h3>
+                    <p>AI 성능을 극대화하는 정교한 명령어 체계 및 아키텍처 설계</p>
+                </div>
+                <div class="service-card">
+                    <div class="icon">🔄</div>
+                    <h3>AI Workflow</h3>
+                    <p>반복적이고 복잡한 업무 프로세스를 자동 실행하는 절차 구축</p>
+                </div>
+                <div class="service-card">
+                    <div class="icon">📊</div>
+                    <h3>AI Content Automation</h3>
+                    <p>NotebookLM 및 AI 기반 문서, PPT, 리포트 생성 프로세스 자동화</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="projects">
+        <div class="container">
+            <div class="section-title">Featured Projects</div>
+            <div class="projects-grid">
+                
+                <div class="project-card">
+                    <div>
+                        <div class="project-category">Core Framework</div>
+                        <h3>AEGIS PRIME</h3>
+                        <p>목적 중심 실행 및 Work Block 기반의 AI 작업 운영 체계. 일관된 AI 출력 품질과 체계적인 작업 흐름을 제공합니다.</p>
+                    </div>
+                    <div class="project-tags">
+                        <span class="tag">AI OS</span>
+                        <span class="tag">System Design</span>
+                        <span class="tag">Automation</span>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div>
+                        <div class="project-category">Document Automation</div>
+                        <h3>NotebookLM PPT</h3>
+                        <p>방대한 텍스트 문서를 정제하여 자동으로 고품질 프리미엄 프레젠테이션 슬라이드로 변환하는 AI 파이프라인.</p>
+                    </div>
+                    <div class="project-tags">
+                        <span class="tag">NotebookLM</span>
+                        <span class="tag">PowerPoint</span>
+                        <span class="tag">Workflow</span>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div>
+                        <div class="project-category">Multi-Agent System</div>
+                        <h3>MEC-AI</h3>
+                        <p>Multi Expert Collaboration System. 다중 AI 에이전트 간 역할 분담과 협업을 통해 고난도 문제를 해결하는 시스템.</p>
+                    </div>
+                    <div class="project-tags">
+                        <span class="tag">Multi-Agent</span>
+                        <span class="tag">Claude</span>
+                        <span class="tag">Python</span>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div>
+                        <div class="project-category">Finance & Intelligence</div>
+                        <h3>AI Trading Assistant</h3>
+                        <p>시장 데이터 자동 수집, 분석 및 일일 맞춤형 인텔리전스 리포트를 생성하는 자동화 분석 트레이딩 보조 시스템.</p>
+                    </div>
+                    <div class="project-tags">
+                        <span class="tag">Automation</span>
+                        <span class="tag">Data Analysis</span>
+                        <span class="tag">n8n / API</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="tech">
+        <div class="container">
+            <div class="section-title">Technology & Tools</div>
+            <div class="tech-grid">
+                
+                <div class="tech-group">
+                    <h3>AI & LLM</h3>
+                    <ul class="tech-list">
+                        <li>ChatGPT</li>
+                        <li>Claude</li>
+                        <li>Gemini</li>
+                        <li>NotebookLM</li>
+                        <li>MCP (Model Context Protocol)</li>
+                    </ul>
+                </div>
+
+                <div class="tech-group">
+                    <h3>Automation & Dev</h3>
+                    <ul class="tech-list">
+                        <li>Python</li>
+                        <li>n8n</li>
+                        <li>REST API</li>
+                        <li>Git & GitHub</li>
+                    </ul>
+                </div>
+
+                <div class="tech-group">
+                    <h3>Design & Output</h3>
+                    <ul class="tech-list">
+                        <li>PowerPoint</li>
+                        <li>Canva</li>
+                        <li>Markdown</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2>함께 AI 시스템을 구축해 보세요</h2>
+            <p>AI 자동화 시스템 구축, 프롬프트 엔지니어링 강의 및 컨설팅 문의는 언제든 환영합니다.</p>
+            <a href="mailto:your-email@example.com" class="btn btn-primary">이메일로 문의하기</a>
+            
+            <div class="social-links">
+                <a href="https://github.com" target="_blank">GitHub</a>
+                <a href="https://linkedin.com" target="_blank">LinkedIn</a>
+                <a href="https://youtube.com" target="_blank">YouTube</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Kim Taehwan. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="adminModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="ph ph-shield-check text-blue-600"></i> 관리자 인증</h3>
+                <button onclick="closeAdminModal()" class="close-btn"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="input-group">
+                <label for="adminPass">비밀번호를 입력하세요</label>
+                <input type="password" id="adminPass" placeholder="••••••••" onkeyup="if(event.key==='Enter') verifyAdminPassword()">
+                <div id="errorMsg" class="error-text">비밀번호가 올바르지 않습니다. 다시 시도해 주세요.</div>
+                <div id="successMsg" class="success-text">인증에 성공하였습니다! 관리자 페이지로 이동합니다...</div>
+            </div>
+            <button onclick="verifyAdminPassword()" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+                확인 및 접속
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_SECRET = "1234"; // 설정하고자 하는 관리자 비밀번호
+
+        function openAdminModal() {
+            const modal = document.getElementById('adminModal');
+            const passInput = document.getElementById('adminPass');
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+            
+            passInput.value = '';
+            errorMsg.classList.remove('active');
+            successMsg.classList.remove('active');
+            modal.classList.add('active');
+            
+            setTimeout(() => passInput.focus(), 100);
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.remove('active');
+        }
+
+        function verifyAdminPassword() {
+            const inputVal = document.getElementById('adminPass').value;
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+
+            if (inputVal === ADMIN_SECRET) {
+                errorMsg.classList.remove('active');
+                successMsg.classList.add('active');
+                
+                setTimeout(() => {
+                    closeAdminModal();
+                    // 미리보기(blob:) 및 실제 웹 서버 환경을 구분하여 안전하게 이탈
+                    try {
+                        if (window.location.protocol === 'blob:') {
+                            alert('인증 성공! (미리보기 환경에서는 admin.html 경로로 직접 이동하시거나 웹서버 환경에서 접속하실 수 있습니다)');
+                        } else {
+                            window.location.href = "admin.html";
+                        }
+                    } catch (e) {
+                        window.location.href = "admin.html";
+                    }
+                }, 800);
+            } else {
+                errorMsg.classList.add('active');
+                document.getElementById('adminPass').focus();
+            }
+        }
+    </script>
+</body>
+</html>
