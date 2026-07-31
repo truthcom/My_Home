@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포트폴리오 데이터 관리자 대시보드</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800 h-screen overflow-hidden">
+
+    <div id="app" class="flex h-screen bg-slate-50 relative">
+        
+        <!-- ================= 1. Security Lock Modal ================= -->
+        <div v-if="!isAuthenticated" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5 border border-slate-100 text-center">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                    <i class="ph ph-lock-key-open"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">관리자 인증</h3>
+                    <p class="text-xs text-slate-500 mt-1">대시보드에 접근하려면 비밀번호를 입력하세요.</p>
+                </div>
+                <div class="space-y-2 text-left">
+                    <input type="password" v-model="passwordInput" @keyup.enter="checkPassword" placeholder="비밀번호 입력" 
+                           class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all">
+                    <p v-if="authError" class="text-xs text-red-500 font-medium flex items-center gap-1">
+                        <i class="ph ph-warning-circle"></i> 비밀번호가 올바르지 않습니다.
+                    </p>
+                </div>
+                <button @click="checkPassword" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm">
+                    확인 및 접속
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Sidebar Backdrop -->
+        <div v-if="mobileMenuOpen" @click="mobileMenuOpen = false" class="fixed inset-0 bg-slate-900/50 z-20 md:hidden"></div>
+
+        <!-- Sidebar -->
+        <aside :class="['bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 z-30 shrink-0 fixed md:static inset-y-0 left-0 w-64', mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0']">
+            <div class="p-6 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <i class="ph ph-database text-2xl text-blue-500"></i>
+                    <div>
+                        <h1 class="text-white font-bold text-base leading-tight">Data Admin</h1>
+                        <p class="text-[11px] text-slate-400">data.json 제어 대시보드</p>
+                    </div>
+                </div>
+                <button @click="mobileMenuOpen = false" class="md:hidden text-slate-400 hover:text-white">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id; mobileMenuOpen = false;" 
+                        :class="['w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors', 
+                                 currentTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-slate-800 hover:text-white']">
+                    <i :class="['ph', tab.icon, 'text-lg']"></i>
+                    <span>{{ tab.label }}</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800 flex flex-col gap-2">
+                <button @click="showPasswordChangeModal = true" class="flex items-center justify-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-lg transition-colors">
+                    <i class="ph ph-key text-blue-400"></i> 비밀번호 변경하기
+                </button>
+                <label class="flex items-center justify-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-lg cursor-pointer transition-colors">
+                    <i class="ph ph-upload-simple"></i> JSON 파일 불러오기
+                    <input type="file" accept=".json" @change="importJsonFile" class="hidden">
+                </label>
+                <button @click="logout" class="flex items-center justify-center gap-2 text-xs bg-red-950/40 hover:bg-red-900/60 text-red-300 py-2 rounded-lg transition-colors">
+                    <i class="ph ph-sign-out"></i> 로그아웃
+                </button>
+                <a href="index.html" class="flex items-center justify-center gap-2 text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-400 py-2 rounded-lg transition-colors">
+                    <i class="ph ph-arrow-left"></i> 메인 페이지로 이동
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
+            
+            <!-- Header -->
+            <header class="bg-white border-b border-slate-200 px-4 md:px-6 py-3.5 flex items-center justify-between shrink-0 z-10 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-slate-600 hover:text-slate-900 p-1">
+                        <i class="ph ph-list text-2xl"></i>
+                    </button>
+                    <h2 class="text-lg md:text-xl font-semibold text-slate-800 flex items-center gap-2">
+                        {{ currentTabLabel }} <span class="text-xs font-normal text-slate-400 hidden sm:inline">| data.json 편집</span>
+                    </h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button @click="exportJson" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors">
+                        <i class="ph ph-file-js text-base text-amber-600"></i>
+                        <span class="hidden sm:inline">JSON 추출</span>
+                    </button>
+                    <button @click="saveLocalStorage" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors">
+                        <i class="ph ph-floppy-disk text-base"></i>
+                        <span class="hidden sm:inline">임시 저장</span>
+                    </button>
+                    <button @click="openGithubModal" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors shadow-sm">
+                        <i class="ph ph-rocket-launch text-base"></i>
+                        <span>배포하기</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Editor Area -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-8">
+                <div class="max-w-4xl mx-auto space-y-6 pb-20" v-if="siteData">
+                    
+                    <!-- 1. Basic Profile & Hero -->
+                    <div v-show="currentTab === 'hero'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 md:p-6 space-y-5">
+                        <h3 class="text-base md:text-lg font-semibold border-b pb-3 flex items-center gap-2 text-slate-800">
+                            <i class="ph ph-user-circle text-blue-500 text-xl"></i> 기본 프로필 및 메인(Hero) 섹션
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">이름 (타이틀/저작권용)</label>
+                                <input v-model="siteData.name" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">상단 배지 태그 (Tag)</label>
+                                <input v-model="siteData.hero.tag" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">메인 타이틀 (엔터 입력 시 실제 사이트에 줄바꿈 적용)</label>
+                            <textarea v-model="siteData.hero.title" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">서브 텍스트 / 키워드 설명</label>
+                            <input v-model="siteData.hero.subtitle" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- 2. About Section -->
+                    <div v-show="currentTab === 'about'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 md:p-6 space-y-5">
+                        <h3 class="text-base md:text-lg font-semibold border-b pb-3 flex items-center gap-2 text-slate-800">
+                            <i class="ph ph-info text-blue-500 text-xl"></i> About 섹션 (자기소개 및 역량)
+                        </h3>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">자기소개 본문</label>
+                            <textarea v-model="siteData.about.text" rows="5" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-slate-100">
+                            <div class="flex justify-between items-center mb-3">
+                                <label class="block text-xs font-bold text-slate-700">핵심 역량 목록 (Features)</label>
+                                <button @click="siteData.about.features.push({title:'', desc:''})" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-2.5 py-1 rounded font-medium transition-colors flex items-center gap-1">
+                                    <i class="ph ph-plus"></i> 역량 추가
+                                </button>
+                            </div>
+                            <div class="space-y-3">
+                                <div v-for="(f, idx) in siteData.about.features" :key="idx" class="flex gap-2 items-start bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        <input v-model="f.title" placeholder="역량명" class="px-3 py-1.5 border border-slate-200 rounded text-sm bg-white">
+                                        <input v-model="f.desc" placeholder="상세 설명" class="sm:col-span-2 px-3 py-1.5 border border-slate-200 rounded text-sm bg-white">
+                                    </div>
+                                    <button @click="siteData.about.features.splice(idx, 1)" class="text-slate-400 hover:text-red-500 p-1.5"><i class="ph ph-trash text-lg"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. What I Do (Services) -->
+                    <div v-show="currentTab === 'services'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 md:p-6 space-y-5">
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <h3 class="text-base md:text-lg font-semibold flex items-center gap-2 text-slate-800">
+                                <i class="ph ph-briefcase text-blue-500 text-xl"></i> What I Do (제공 서비스)
+                            </h3>
+                            <button @click="siteData.services.push({icon:'⚙️', title:'', desc:''})" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1">
+                                <i class="ph ph-plus"></i> 서비스 추가
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div v-for="(s, idx) in siteData.services" :key="idx" class="bg-slate-50 p-4 rounded-xl border border-slate-200 relative group">
+                                <button @click="siteData.services.splice(idx, 1)" class="absolute top-3 right-3 text-slate-400 hover:text-red-500 p-1"><i class="ph ph-x text-lg"></i></button>
+                                <div class="space-y-3 pr-6">
+                                    <div>
+                                        <label class="block text-[11px] font-medium text-slate-500 mb-1">아이콘 (이모지)</label>
+                                        <input v-model="s.icon" type="text" class="w-20 px-2 py-1 border border-slate-200 rounded bg-white text-center text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-medium text-slate-500 mb-1">서비스 타이틀</label>
+                                        <input v-model="s.title" type="text" class="w-full px-3 py-1.5 border border-slate-200 rounded bg-white text-sm font-semibold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-medium text-slate-500 mb-1">상세 설명</label>
+                                        <textarea v-model="s.desc" rows="2" class="w-full px-3 py-1.5 border border-slate-200 rounded bg-white text-sm"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Featured Projects -->
+                    <div v-show="currentTab === 'projects'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 md:p-6 space-y-5">
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <h3 class="text-base md:text-lg font-semibold flex items-center gap-2 text-slate-800">
+                                <i class="ph ph-folder-star text-blue-500 text-xl"></i> Featured Projects (주요 프로젝트)
+                            </h3>
+                            <button @click="addProject" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1">
+                                <i class="ph ph-plus"></i> 프로젝트 추가
+                            </button>
+                        </div>
+                        <div class="space-y-6">
+                            <div v-for="(p, idx) in siteData.projects" :key="idx" class="bg-slate-50 p-4 md:p-5 rounded-xl border border-slate-200 relative space-y-4">
+                                <div class="flex justify-between items-start gap-4 border-b border-slate-200 pb-2">
+                                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded">#{{ idx + 1 }} 프로젝트</span>
+                                    <button @click="siteData.projects.splice(idx, 1)" class="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"><i class="ph ph-trash"></i> 삭제</button>
+                                </div>
+                                
+                                <!-- 대표 이미지 등록 섹션 -->
+                                <div class="bg-white p-3.5 rounded-lg border border-slate-200 space-y-3">
+                                    <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                        <i class="ph ph-image text-blue-500"></i> 대표 이미지 등록
+                                    </label>
+                                    <div class="flex flex-col sm:flex-row items-center gap-3">
+                                        <div v-if="p.image" class="w-24 h-20 bg-slate-100 rounded border overflow-hidden shrink-0 relative group">
+                                            <img :src="p.image" class="w-full h-full object-cover">
+                                            <button @click="p.image=''" class="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs">삭제</button>
+                                        </div>
+                                        <div class="flex-1 space-y-2 w-full">
+                                            <div class="flex items-center gap-2">
+                                                <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-md flex items-center gap-1 shrink-0 transition-colors">
+                                                    <i class="ph ph-upload"></i> 컴퓨터에서 첨부
+                                                    <input type="file" accept="image/*" @change="handleImageUpload(p, $event)" class="hidden">
+                                                </label>
+                                                <span class="text-[11px] text-slate-400">또는 projects/ 폴더 파일 경로 직접 입력</span>
+                                            </div>
+                                            <input v-model="p.image" type="text" placeholder="예: projects/my-project.png" class="w-full px-3 py-1 border border-slate-200 rounded text-xs bg-slate-50">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">카테고리</label>
+                                        <input v-model="p.category" type="text" class="w-full px-3 py-1.5 border border-slate-200 rounded bg-white text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">프로젝트 이름</label>
+                                        <input v-model="p.title" type="text" class="w-full px-3 py-1.5 border border-slate-200 rounded bg-white text-sm font-semibold">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">상세 설명</label>
+                                    <textarea v-model="p.desc" rows="2" class="w-full px-3 py-1.5 border border-slate-200 rounded bg-white text-sm"></textarea>
+                                </div>
+
+                                <!-- 관련 파일/링크 등록 섹션 -->
+                                <div class="bg-white p-3.5 rounded-lg border border-slate-200 space-y-3">
+                                    <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                        <i class="ph ph-link-simple text-blue-500"></i> 첨부 파일 / 외부 링크 연결
+                                    </label>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                        <div class="md:col-span-2">
+                                            <input v-model="p.link" type="text" placeholder="예: projects/guide.pdf 또는 외부 URL" class="w-full px-3 py-1.5 border border-slate-200 rounded text-xs">
+                                        </div>
+                                        <div>
+                                            <input v-model="p.linkText" type="text" placeholder="버튼 이름 (예: 문서 보기)" class="w-full px-3 py-1.5 border border-slate-200 rounded text-xs">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">기술 태그 (쉼표로 구분)</label>
+                                    <input :value="p.tags ? p.tags.join(', ') : ''" @input="updateTags(p, $event.target.value)" type="text" placeholder="예: AI OS, System Design, Automation" class="w-full px-3 py-1.5 border border-slate-200 rounded bg-white text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Tech Stack -->
+                    <div v-show="currentTab === 'tech'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 md:p-6 space-y-5">
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <h3 class="text-base md:text-lg font-semibold flex items-center gap-2 text-slate-800">
+                                <i class="ph ph-cpu text-blue-500 text-xl"></i> Technology & Tools (기술 스택)
+                            </h3>
+                            <button @click="siteData.techGroups.push({title:'새 그룹', items:['']})" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1">
+                                <i class="ph ph-plus"></i> 그룹 추가
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div v-for="(g, gIdx) in siteData.techGroups" :key="gIdx" class="bg-slate-50 p-4 rounded-xl border border-slate-200 relative">
+                                <button @click="siteData.techGroups.splice(gIdx, 1)" class="absolute top-3 right-3 text-slate-400 hover:text-red-500"><i class="ph ph-x text-base"></i></button>
+                                <input v-model="g.title" placeholder="그룹명 (예: AI & LLM)" class="font-bold w-full bg-transparent border-b border-slate-300 mb-3 pb-1 text-sm focus:outline-none focus:border-blue-500">
+                                <div class="space-y-2 mb-3">
+                                    <div v-for="(item, iIdx) in g.items" :key="iIdx" class="flex gap-1">
+                                        <input v-model="g.items[iIdx]" class="flex-1 px-2.5 py-1 border border-slate-200 rounded bg-white text-xs focus:outline-none">
+                                        <button @click="g.items.splice(iIdx, 1)" class="text-slate-400 hover:text-red-500 px-1"><i class="ph ph-minus-circle"></i></button>
+                                    </div>
+                                </div>
+                                <button @click="g.items.push('')" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"><i class="ph ph-plus"></i> 기술 항목 추가</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. Contact Section -->
+                    <div v-show="currentTab === 'contact'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 md:p-6 space-y-5">
+                        <h3 class="text-base md:text-lg font-semibold border-b pb-3 flex items-center gap-2 text-slate-800">
+                            <i class="ph ph-envelope-simple text-blue-500 text-xl"></i> Contact 섹션 (연락처 및 소셜)
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">하단 섹션 제목</label>
+                                <input v-model="siteData.contact.title" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">설명 문구</label>
+                                <input v-model="siteData.contact.desc" type="text" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">수신 이메일 주소</label>
+                                <input v-model="siteData.contact.email" type="email" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t">
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-500 mb-1">GitHub 링크</label>
+                                    <input v-model="siteData.contact.social.github" type="text" class="w-full px-2.5 py-1.5 border border-slate-200 rounded text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-500 mb-1">LinkedIn 링크</label>
+                                    <input v-model="siteData.contact.social.linkedin" type="text" class="w-full px-2.5 py-1.5 border border-slate-200 rounded text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-500 mb-1">YouTube 링크</label>
+                                    <input v-model="siteData.contact.social.youtube" type="text" class="w-full px-2.5 py-1.5 border border-slate-200 rounded text-xs">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+
+        <!-- Password Change Modal -->
+        <div v-if="showPasswordChangeModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="ph ph-key text-blue-600 text-xl"></i> 관리자 비밀번호 변경
+                    </h3>
+                    <button @click="showPasswordChangeModal = false" class="text-slate-400 hover:text-slate-700"><i class="ph ph-x text-xl"></i></button>
+                </div>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">새로운 비밀번호</label>
+                        <input v-model="newPassword" type="password" placeholder="새 비밀번호 입력" class="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">비밀번호 확인</label>
+                        <input v-model="newPasswordConfirm" type="password" placeholder="새 비밀번호 재입력" class="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <p v-if="passwordChangeError" class="text-xs text-red-500 font-medium flex items-center gap-1">
+                        <i class="ph ph-warning-circle"></i> {{ passwordChangeError }}
+                    </p>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button @click="showPasswordChangeModal = false" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">취소</button>
+                    <button @click="applyNewPassword" class="px-4 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-1.5 shadow-sm">
+                        <i class="ph ph-check"></i> 변경사항 적용
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GitHub Deploy Modal -->
+        <div v-if="showGithubModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="ph ph-git-branch text-emerald-600 text-xl"></i> GitHub / Netlify 원클릭 배포
+                    </h3>
+                    <button @click="showGithubModal = false" class="text-slate-400 hover:text-slate-700"><i class="ph ph-x text-xl"></i></button>
+                </div>
+                <p class="text-xs text-slate-500">입력된 정보는 브라우저 내부(LocalStorage)에만 안전하게 저장됩니다.</p>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">GitHub 계정명 (Username)</label>
+                        <input v-model="ghConfig.username" type="text" placeholder="예: taehwan-kim" class="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">저장소 이름 (Repository)</label>
+                        <input v-model="ghConfig.repo" type="text" placeholder="예: my-portfolio" class="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">GitHub Personal Access Token (ghp_...)</label>
+                        <input v-model="ghConfig.token" type="password" placeholder="ghp_••••••••••••" class="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button @click="showGithubModal = false" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">취소</button>
+                    <button @click="deployToGithub" :disabled="isDeploying" class="px-4 py-2 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 shadow-sm disabled:opacity-50">
+                        <i v-if="isDeploying" class="ph ph-spinner animate-spin"></i>
+                        {{ isDeploying ? 'GitHub 커밋 진행 중...' : '저장 및 라이브 배포' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Modal -->
+        <div v-if="showExportModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+                <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="ph ph-file-js text-amber-500 text-xl"></i> 생성된 data.json 코드
+                    </h3>
+                    <button @click="showExportModal = false" class="text-slate-400 hover:text-slate-700"><i class="ph ph-x text-xl"></i></button>
+                </div>
+                <div class="p-4 flex-1 overflow-hidden flex flex-col bg-slate-900">
+                    <textarea readonly :value="exportedJsonStr" class="w-full flex-1 p-3 bg-transparent text-emerald-400 font-mono text-xs focus:outline-none resize-none leading-relaxed"></textarea>
+                </div>
+                <div class="p-4 border-t border-slate-200 flex justify-end gap-2 bg-white rounded-b-xl">
+                    <button @click="downloadJsonFile" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors">
+                        <i class="ph ph-download-simple"></i> 파일로 다운로드
+                    </button>
+                    <button @click="copyJsonToClipboard" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium flex items-center gap-1.5 transition-colors">
+                        <i class="ph ph-copy"></i> 클립보드 복사
+                    </button>
+                </div>
+            </div>
+        </div
+
+        <!-- Toast Notification -->
+        <transition name="fade">
+            <div v-if="toastMessage" class="fixed bottom-6 right-6 bg-slate-800 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2.5 z-50 text-sm font-medium">
+                <i class="ph ph-check-circle text-emerald-400 text-xl"></i>
+                <span>{{ toastMessage }}</span>
+            </div>
+        </transition>
+
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        // 기본 초기 암호 ("1234") 해시값
+        const DEFAULT_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+
+        createApp({
+            data() {
+                return {
+                    // 보안 검증 상태
+                    isAuthenticated: false,
+                    passwordInput: '',
+                    authError: false,
+
+                    // 비밀번호 변경 모달 상태
+                    showPasswordChangeModal: false,
+                    newPassword: '',
+                    newPasswordConfirm: '',
+                    passwordChangeError: '',
+
+                    currentTab: 'hero',
+                    mobileMenuOpen: false,
+                    showGithubModal: false,
+                    showExportModal: false,
+                    isDeploying: false,
+                    toastMessage: '',
+                    exportedJsonStr: '',
+                    tabs: [
+                        { id: 'hero', label: '메인(Hero)', icon: 'ph-rocket-launch' },
+                        { id: 'about', label: '소개(About)', icon: 'ph-user' },
+                        { id: 'services', label: '서비스(What I Do)', icon: 'ph-briefcase' },
+                        { id: 'projects', label: '프로젝트', icon: 'ph-folder-star' },
+                        { id: 'tech', label: '기술 스택', icon: 'ph-cpu' },
+                        { id: 'contact', label: '연락처(Contact)', icon: 'ph-envelope-simple' },
+                    ],
+                    siteData: {
+                        authHash: DEFAULT_HASH,
+                        name: "김태환",
+                        hero: { tag: "", title: "", subtitle: "" },
+                        about: { text: "", features: [] },
+                        services: [],
+                        projects: [],
+                        techGroups: [],
+                        contact: { title: "", desc: "", email: "", social: {} }
+                    },
+                    ghConfig: { username: '', repo: '', branch: 'main', token: '' }
+                };
+            },
+            computed: {
+                currentTabLabel() {
+                    const tab = this.tabs.find(t => t.id === this.currentTab);
+                    return tab ? tab.label : '';
+                }
+            },
+            methods: {
+                // SHA-256 해시화 함수
+                async hashPassword(password) {
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(password);
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                },
+                // 비밀번호 검증 (siteData.authHash 또는 DEFAULT_HASH 와 비교)
+                async checkPassword() {
+                    if (!this.passwordInput) return;
+                    const hashed = await this.hashPassword(this.passwordInput);
+                    const targetHash = (this.siteData && this.siteData.authHash) ? this.siteData.authHash : DEFAULT_HASH;
+                    
+                    if (hashed === targetHash) {
+                        this.isAuthenticated = true;
+                        this.authError = false;
+                        sessionStorage.setItem('admin_auth', 'true');
+                    } else {
+                        this.authError = true;
+                    }
+                },
+                // UI상에서 직접 비밀번호 변경 실행
+                async applyNewPassword() {
+                    this.passwordChangeError = '';
+                    if (!this.newPassword) {
+                        this.passwordChangeError = '새 비밀번호를 입력해주세요.';
+                        return;
+                    }
+                    if (this.newPassword !== this.newPasswordConfirm) {
+                        this.passwordChangeError = '비밀번호 확인이 일치하지 않습니다.';
+                        return;
+                    }
+                    if (this.newPassword.length < 4) {
+                        this.passwordChangeError = '비밀번호는 최소 4자 이상이어야 합니다.';
+                        return;
+                    }
+
+                    // 새 비밀번호 해시 계산 후 siteData.authHash에 저장
+                    const newHash = await this.hashPassword(this.newPassword);
+                    this.siteData.authHash = newHash;
+
+                    // 모달 닫기 및 초기화
+                    this.showPasswordChangeModal = false;
+                    this.newPassword = '';
+                    this.newPasswordConfirm = '';
+                    
+                    this.saveLocalStorage();
+                    this.showToast('비밀번호가 변경되었습니다! 상단의 [배포하기]를 누르면 사이트에 반영됩니다.');
+                },
+                logout() {
+                    sessionStorage.removeItem('admin_auth');
+                    this.isAuthenticated = false;
+                    this.passwordInput = '';
+                },
+                showToast(msg) {
+                    this.toastMessage = msg;
+                    setTimeout(() => { this.toastMessage = ''; }, 3500);
+                },
+                async loadData() {
+                    const savedLocal = localStorage.getItem('portfolioAdminData');
+                    if (savedLocal) {
+                        try {
+                            const parsed = JSON.parse(savedLocal);
+                            this.siteData = Object.assign({}, this.siteData, parsed);
+                        } catch(e) {}
+                    }
+                    
+                    try {
+                        const res = await fetch('data.json?v=' + new Date().getTime());
+                        if (res.ok) {
+                            const remoteData = await res.json();
+                            if (!savedLocal) {
+                                this.siteData = Object.assign({}, this.siteData, remoteData);
+                            }
+                        }
+                    } catch (e) {
+                        console.log("data.json 로드 실패");
+                    }
+                },
+                saveLocalStorage() {
+                    localStorage.setItem('portfolioAdminData', JSON.stringify(this.siteData));
+                    this.showToast('브라우저에 데이터가 임시 저장되었습니다.');
+                },
+                addProject() {
+                    this.siteData.projects.push({
+                        category: 'NEW CATEGORY',
+                        title: '새 프로젝트 명',
+                        desc: '프로젝트에 대한 설명을 입력하세요.',
+                        image: 'projects/example.png',
+                        link: 'projects/document.pdf',
+                        linkText: '자세히 보기',
+                        tags: ['AI', 'Automation']
+                    });
+                },
+                handleImageUpload(proj, event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    if (file.size > 3 * 1024 * 1024) {
+                        alert('이미지 파일 크기가 3MB를 초과합니다. 더 작은 이미지를 선택해주세요.');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        proj.image = e.target.result;
+                        this.showToast('이미지가 등록되었습니다!');
+                    };
+                    reader.readAsDataURL(file);
+                },
+                importJsonFile(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const imported = JSON.parse(e.target.result);
+                            this.siteData = Object.assign({}, this.siteData, imported);
+                            this.showToast('JSON 파일을 성공적으로 불러왔습니다!');
+                        } catch (err) {
+                            alert('올바른 JSON 파일 형식이 아닙니다.');
+                        }
+                    };
+                    reader.readAsText(file);
+                },
+                updateTags(proj, val) {
+                    proj.tags = val.split(',').map(t => t.trim()).filter(t => t);
+                },
+                exportJson() {
+                    this.exportedJsonStr = JSON.stringify(this.siteData, null, 2);
+                    this.showExportModal = true;
+                },
+                downloadJsonFile() {
+                    const blob = new Blob([this.exportedJsonStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'data.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    this.showToast('data.json 파일이 다운로드되었습니다.');
+                },
+                copyJsonToClipboard() {
+                    const el = document.createElement('textarea');
+                    el.value = this.exportedJsonStr;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                    this.showToast('JSON 코드가 클립보드에 복사되었습니다.');
+                },
+                openGithubModal() {
+                    const savedConfig = localStorage.getItem('gh_config');
+                    if (savedConfig) {
+                        try { this.ghConfig = JSON.parse(savedConfig); } catch(e){}
+                    }
+                    this.showGithubModal = true;
+                },
+                async deployToGithub() {
+                    if (!this.ghConfig.username || !this.ghConfig.repo || !this.ghConfig.token) {
+                        alert('GitHub 정보를 모두 입력해주세요.');
+                        return;
+                    }
+
+                    localStorage.setItem('gh_config', JSON.stringify(this.ghConfig));
+                    this.isDeploying = true;
+
+                    try {
+                        const path = 'data.json';
+                        const url = `https://api.github.com/repos/${this.ghConfig.username}/${this.ghConfig.repo}/contents/${path}`;
+                        
+                        let sha = '';
+                        const getRes = await fetch(url, {
+                            headers: { Authorization: `token ${this.ghConfig.token}` }
+                        });
+                        if (getRes.ok) {
+                            const getData = await getRes.json();
+                            sha = getData.sha;
+                        }
+
+                        const jsonString = JSON.stringify(this.siteData, null, 2);
+                        const contentBase64 = btoa(unescape(encodeURIComponent(jsonString)));
+
+                        const putRes = await fetch(url, {
+                            method: 'PUT',
+                            headers: {
+                                Authorization: `token ${this.ghConfig.token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                message: 'Update portfolio data.json via Admin Dashboard',
+                                content: contentBase64,
+                                sha: sha || undefined,
+                                branch: this.ghConfig.branch || 'main'
+                            })
+                        });
+
+                        if (putRes.ok) {
+                            this.showToast('🚀 data.json 커밋 완료! Netlify에 약 15초 후 라이브 반영됩니다.');
+                            this.showGithubModal = false;
+                        } else {
+                            const err = await putRes.json();
+                            alert('배포 실패: ' + (err.message || '알 수 없는 오류'));
+                        }
+                    } catch (e) {
+                        alert('통신 오류 발생: ' + e.message);
+                    } finally {
+                        this.isDeploying = false;
+                    }
+                }
+            },
+            async mounted() {
+                await this.loadData();
+                // 기존 세션 인증 여부 확인
+                if (sessionStorage.getItem('admin_auth') === 'true') {
+                    this.isAuthenticated = true;
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
