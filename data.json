@@ -1,13 +1,13 @@
 {
   "authHash": "076b3ad56a27f109d8414307c9be4e3c5ce9e724801d28617021de8b858e4027",
-  "name": "KTH",
+  "name": "Kim Tae Hwan",
   "hero": {
     "tag": "AI Operating System Architect",
     "title": "AI를 사용하는 것을 넘어,\n스스로 일하도록 시스템을 설계합니다.",
     "subtitle": "Prompt Engineering · AI Workflow Automation · AEGIS PRIME"
   },
   "about": {
-    "text": "안녕하세요, KTH입니다.\n저는 AI를 활용하여 복잡한 업무를 체계적으로 자동화하는 방식을 연구합니다.\n단순히 단발성 프롬프트를 작성하는 것에 그치지 않고, AI가 일관된 품질로 반복 작업을 수행할 수 있는 <strong>운영 시스템 및 실행 파이프라인</strong>을 설계합니다.\n2026년 7월 30일 github ->netlify 적용하여 변경 테스트까지 완료함  // PM 10:10\n2026년 7월 31일 admin 관리자 인증 적용",
+    "text": "안녕하세요, Kim Tae Hwan입니다.\n저는 AI를 활용하여 복잡한 업무를 체계적으로 자동화하는 방식을 연구합니다.\n단순히 단발성 프롬프트를 작성하는 것에 그치지 않고, AI가 일관된 품질로 반복 작업을 수행할 수 있는 <strong>운영 시스템 및 실행 파이프라인</strong>을 설계합니다.\n2026년 7월 30일 github ->netlify 적용하여 변경 테스트까지 완료함  // PM 10:10",
     "features": [
       {
         "title": "Prompt Engineering",
