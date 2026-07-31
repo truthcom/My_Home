@@ -27,8 +27,31 @@
 </head>
 <body class="text-slate-800 h-screen overflow-hidden">
 
-    <div id="app" class="flex h-screen bg-slate-50">
+    <div id="app" class="flex h-screen bg-slate-50 relative">
         
+        <!-- ================= 1. Security Lock Modal ================= -->
+        <div v-if="!isAuthenticated" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5 border border-slate-100 text-center">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                    <i class="ph ph-lock-key-open"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">관리자 인증</h3>
+                    <p class="text-xs text-slate-500 mt-1">대시보드에 접근하려면 비밀번호를 입력하세요.</p>
+                </div>
+                <div class="space-y-2 text-left">
+                    <input type="password" v-model="passwordInput" @keyup.enter="checkPassword" placeholder="비밀번호 입력" 
+                           class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all">
+                    <p v-if="authError" class="text-xs text-red-500 font-medium flex items-center gap-1">
+                        <i class="ph ph-warning-circle"></i> 비밀번호가 올바르지 않습니다.
+                    </p>
+                </div>
+                <button @click="checkPassword" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm">
+                    확인 및 접속
+                </button>
+            </div>
+        </div>
+
         <!-- Mobile Sidebar Backdrop -->
         <div v-if="mobileMenuOpen" @click="mobileMenuOpen = false" class="fixed inset-0 bg-slate-900/50 z-20 md:hidden"></div>
 
@@ -57,17 +80,23 @@
             </nav>
 
             <div class="p-4 border-t border-slate-800 flex flex-col gap-2">
+                <button @click="showPasswordChangeModal = true" class="flex items-center justify-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-lg transition-colors">
+                    <i class="ph ph-key text-blue-400"></i> 비밀번호 변경하기
+                </button>
                 <label class="flex items-center justify-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-lg cursor-pointer transition-colors">
                     <i class="ph ph-upload-simple"></i> JSON 파일 불러오기
                     <input type="file" accept=".json" @change="importJsonFile" class="hidden">
                 </label>
+                <button @click="logout" class="flex items-center justify-center gap-2 text-xs bg-red-950/40 hover:bg-red-900/60 text-red-300 py-2 rounded-lg transition-colors">
+                    <i class="ph ph-sign-out"></i> 로그아웃
+                </button>
                 <a href="index.html" class="flex items-center justify-center gap-2 text-xs bg-slate-800/60 hover:bg-slate-700 text-slate-400 py-2 rounded-lg transition-colors">
                     <i class="ph ph-arrow-left"></i> 메인 페이지로 이동
                 </a>
             </div>
         </aside>
 
-        <!-- Main Content -->
+        <!-- Main Content Area -->
         <main class="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
             
             <!-- Header -->
@@ -185,7 +214,7 @@
                         </div>
                     </div>
 
-                    <!-- 4. Featured Projects (With projects/ folder support) -->
+                    <!-- 4. Featured Projects -->
                     <div v-show="currentTab === 'projects'" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 md:p-6 space-y-5">
                         <div class="flex justify-between items-center border-b pb-3">
                             <h3 class="text-base md:text-lg font-semibold flex items-center gap-2 text-slate-800">
@@ -328,6 +357,37 @@
             </div>
         </main>
 
+        <!-- Password Change Modal -->
+        <div v-if="showPasswordChangeModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="ph ph-key text-blue-600 text-xl"></i> 관리자 비밀번호 변경
+                    </h3>
+                    <button @click="showPasswordChangeModal = false" class="text-slate-400 hover:text-slate-700"><i class="ph ph-x text-xl"></i></button>
+                </div>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">새로운 비밀번호</label>
+                        <input v-model="newPassword" type="password" placeholder="새 비밀번호 입력" class="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">비밀번호 확인</label>
+                        <input v-model="newPasswordConfirm" type="password" placeholder="새 비밀번호 재입력" class="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <p v-if="passwordChangeError" class="text-xs text-red-500 font-medium flex items-center gap-1">
+                        <i class="ph ph-warning-circle"></i> {{ passwordChangeError }}
+                    </p>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button @click="showPasswordChangeModal = false" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">취소</button>
+                    <button @click="applyNewPassword" class="px-4 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-1.5 shadow-sm">
+                        <i class="ph ph-check"></i> 변경사항 적용
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- GitHub Deploy Modal -->
         <div v-if="showGithubModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4">
@@ -383,7 +443,7 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </div
 
         <!-- Toast Notification -->
         <transition name="fade">
@@ -398,9 +458,23 @@
     <script>
         const { createApp } = Vue;
 
+        // 기본 초기 암호 ("1234") 해시값
+        const DEFAULT_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+
         createApp({
             data() {
                 return {
+                    // 보안 검증 상태
+                    isAuthenticated: false,
+                    passwordInput: '',
+                    authError: false,
+
+                    // 비밀번호 변경 모달 상태
+                    showPasswordChangeModal: false,
+                    newPassword: '',
+                    newPasswordConfirm: '',
+                    passwordChangeError: '',
+
                     currentTab: 'hero',
                     mobileMenuOpen: false,
                     showGithubModal: false,
@@ -417,6 +491,7 @@
                         { id: 'contact', label: '연락처(Contact)', icon: 'ph-envelope-simple' },
                     ],
                     siteData: {
+                        authHash: DEFAULT_HASH,
                         name: "김태환",
                         hero: { tag: "", title: "", subtitle: "" },
                         about: { text: "", features: [] },
@@ -435,23 +510,81 @@
                 }
             },
             methods: {
+                // SHA-256 해시화 함수
+                async hashPassword(password) {
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(password);
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                },
+                // 비밀번호 검증 (siteData.authHash 또는 DEFAULT_HASH 와 비교)
+                async checkPassword() {
+                    if (!this.passwordInput) return;
+                    const hashed = await this.hashPassword(this.passwordInput);
+                    const targetHash = (this.siteData && this.siteData.authHash) ? this.siteData.authHash : DEFAULT_HASH;
+                    
+                    if (hashed === targetHash) {
+                        this.isAuthenticated = true;
+                        this.authError = false;
+                        sessionStorage.setItem('admin_auth', 'true');
+                    } else {
+                        this.authError = true;
+                    }
+                },
+                // UI상에서 직접 비밀번호 변경 실행
+                async applyNewPassword() {
+                    this.passwordChangeError = '';
+                    if (!this.newPassword) {
+                        this.passwordChangeError = '새 비밀번호를 입력해주세요.';
+                        return;
+                    }
+                    if (this.newPassword !== this.newPasswordConfirm) {
+                        this.passwordChangeError = '비밀번호 확인이 일치하지 않습니다.';
+                        return;
+                    }
+                    if (this.newPassword.length < 4) {
+                        this.passwordChangeError = '비밀번호는 최소 4자 이상이어야 합니다.';
+                        return;
+                    }
+
+                    // 새 비밀번호 해시 계산 후 siteData.authHash에 저장
+                    const newHash = await this.hashPassword(this.newPassword);
+                    this.siteData.authHash = newHash;
+
+                    // 모달 닫기 및 초기화
+                    this.showPasswordChangeModal = false;
+                    this.newPassword = '';
+                    this.newPasswordConfirm = '';
+                    
+                    this.saveLocalStorage();
+                    this.showToast('비밀번호가 변경되었습니다! 상단의 [배포하기]를 누르면 사이트에 반영됩니다.');
+                },
+                logout() {
+                    sessionStorage.removeItem('admin_auth');
+                    this.isAuthenticated = false;
+                    this.passwordInput = '';
+                },
                 showToast(msg) {
                     this.toastMessage = msg;
-                    setTimeout(() => { this.toastMessage = ''; }, 3000);
+                    setTimeout(() => { this.toastMessage = ''; }, 3500);
                 },
                 async loadData() {
                     const savedLocal = localStorage.getItem('portfolioAdminData');
                     if (savedLocal) {
                         try {
-                            this.siteData = JSON.parse(savedLocal);
-                            return;
+                            const parsed = JSON.parse(savedLocal);
+                            this.siteData = Object.assign({}, this.siteData, parsed);
                         } catch(e) {}
                     }
                     
                     try {
                         const res = await fetch('data.json?v=' + new Date().getTime());
                         if (res.ok) {
-                            this.siteData = await res.json();
+                            const remoteData = await res.json();
+                            if (!savedLocal) {
+                                this.siteData = Object.assign({}, this.siteData, remoteData);
+                            }
                         }
                     } catch (e) {
                         console.log("data.json 로드 실패");
@@ -495,7 +628,8 @@
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         try {
-                            this.siteData = JSON.parse(e.target.result);
+                            const imported = JSON.parse(e.target.result);
+                            this.siteData = Object.assign({}, this.siteData, imported);
                             this.showToast('JSON 파일을 성공적으로 불러왔습니다!');
                         } catch (err) {
                             alert('올바른 JSON 파일 형식이 아닙니다.');
@@ -589,8 +723,12 @@
                     }
                 }
             },
-            mounted() {
-                this.loadData();
+            async mounted() {
+                await this.loadData();
+                // 기존 세션 인증 여부 확인
+                if (sessionStorage.getItem('admin_auth') === 'true') {
+                    this.isAuthenticated = true;
+                }
             }
         }).mount('#app');
     </script>
